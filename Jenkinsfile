@@ -22,14 +22,17 @@ pipeline {
           image 'mcr.microsoft.com/dotnet/sdk:6.0'
         }
       }
+      environment {
+          DOTNET_CLI_HOME = "${env.WORKSPACE}"
+      }
       steps {
         echo "Dependencies"
         echo "Building App"
         sh "dotnet --version"
         dir("MyApp") {
-          sh "pwd"
-          sh "ls -la"
-          echo "$DOTNET_CLI_HOME"
+          // sh "pwd"
+          // sh "ls -la"
+          // echo "$DOTNET_CLI_HOME"
           sh "dotnet build"
         }
       }
