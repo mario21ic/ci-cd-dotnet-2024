@@ -27,6 +27,9 @@ pipeline {
         echo "Building App"
         sh "dotnet --version"
         dir("MyApp") {
+          sh "pwd"
+          sh "ls -la"
+          echo "$DOTNET_CLI_HOME"
           sh "dotnet build"
         }
       }
