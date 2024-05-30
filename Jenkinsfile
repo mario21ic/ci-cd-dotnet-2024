@@ -20,11 +20,12 @@ pipeline {
       agent {
         docker {
           image 'mcr.microsoft.com/dotnet/sdk:6.0'
+          args '-u root:root'
         }
       }
-      environment {
-          DOTNET_CLI_HOME = "${env.WORKSPACE}"
-      }
+      // environment {
+      //     DOTNET_CLI_HOME = "${env.WORKSPACE}"
+      // }
       steps {
         echo "Dependencies"
         echo "Building App"
