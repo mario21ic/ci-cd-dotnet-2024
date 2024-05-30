@@ -8,7 +8,7 @@ pipeline {
       }
     }
 
-    stage("Check") {
+    stage("Check-FEAT-124") {
       steps {
         echo "Nueva feature en FEAT-124"
         sh "./scripts/check_syntax.sh"
