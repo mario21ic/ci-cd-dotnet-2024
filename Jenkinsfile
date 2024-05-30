@@ -8,7 +8,7 @@ pipeline {
       }
     }
 
-    stage("Check") {
+    stage("Check-FEAT-123") {
       steps {
         sh "./scripts/check_syntax.sh"
         echo "Sonarqube"
