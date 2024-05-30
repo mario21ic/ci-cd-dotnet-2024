@@ -26,7 +26,9 @@ pipeline {
         echo "Dependencies"
         echo "Building App"
         sh "dotnet --version"
-        sh "dotnet build"
+        dir("MyApp") {
+          sh "dotnet build"
+        }
       }
     }
 
