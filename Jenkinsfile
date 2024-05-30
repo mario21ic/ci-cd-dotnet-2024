@@ -26,6 +26,7 @@ pipeline {
       steps {
         echo "Dependencies"
         echo "Building App"
+
         sh "dotnet --version"
         dir("./MyApp/") {
           sh "dotnet build"
@@ -34,7 +35,17 @@ pipeline {
     }
 
     stage("Test") {
+      agent {
+        docker {
+          image 'mcr.microsoft.com/dotnet/sdk:6.0'
+          args '-u root:root'
+        }
+      }
       steps {
+        dir("./MyApp/") {
+          sh "dotnet build"
+        }
+        
         sh "./scripts/unit_tests.sh ${env.BUILD_NUMBER}"
         sh "./scripts/integration_tests.sh ${env.BUILD_NUMBER} ${env.JOB_NAME}"
 
