@@ -11,41 +11,41 @@ pipeline {
     stage("Check") {
       steps {
         sh "./scripts/check_syntax.sh"
-        echo "sonarqube"
-        echo "style"
+        echo "Sonarqube"
+        echo "Style"
       }
     }
     
     stage("Build") {
       steps {
-        echo "dependencies"
-        echo "build app"
+        echo "Dependencies"
+        echo "Building App"
       }
     }
 
     stage("Test") {
       steps {
 
-        sh "./scripts/unit_tests.sh ${env.BRANCH_NAME}"
-        sh "./scripts/integration_tests.sh ${env.BRANCH_NAME} ${env.BUILD_NUMBER}"
+        sh "./scripts/unit_tests.sh ${env.BUILD_NUMBER}"
+        sh "./scripts/integration_tests.sh ${env.BUILD_NUMBER} ${env.JOB_NAME}"
 
-        echo "performance test"
-        echo "security test"
-        echo "acceptance test"
-        echo "end to end test"
+        echo "Performance test"
+        echo "Security test"
+        echo "Acceptance test"
+        echo "End to end test"
 
       }
     }
 
     stage("Deploy") {
       steps {
-        echo "calling another job"
+        echo "Calling another job"
       }
     }
 
     stage('Report') {
       steps {
-        echo "publishing report"
+        echo "Publishing report"
         echo "${env.GIT_BRANCH}"
         echo "${env.GIT_COMMIT}"
         echo "${env.GIT_URL}"
