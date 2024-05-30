@@ -23,17 +23,11 @@ pipeline {
           args '-u root:root'
         }
       }
-      // environment {
-      //     DOTNET_CLI_HOME = "${env.WORKSPACE}"
-      // }
       steps {
         echo "Dependencies"
         echo "Building App"
         sh "dotnet --version"
-        dir("MyApp") {
-          // sh "pwd"
-          // sh "ls -la"
-          // echo "$DOTNET_CLI_HOME"
+        dir("./MyApp/") {
           sh "dotnet build"
         }
       }
@@ -41,7 +35,6 @@ pipeline {
 
     stage("Test") {
       steps {
-
         sh "./scripts/unit_tests.sh ${env.BUILD_NUMBER}"
         sh "./scripts/integration_tests.sh ${env.BUILD_NUMBER} ${env.JOB_NAME}"
 
@@ -49,7 +42,6 @@ pipeline {
         echo "Security test"
         echo "Acceptance test"
         echo "End to end test"
-
       }
     }
 
