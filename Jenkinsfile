@@ -43,7 +43,7 @@ pipeline {
       }
     }
 
-    stage ('Report') {
+    stage('Report') {
       echo "${env.GIT_BRANCH}"
       echo "${env.GIT_COMMIT}"
       echo "${env.GIT_URL}"
