@@ -44,15 +44,19 @@ pipeline {
     }
 
     stage('Report') {
-      echo "${env.GIT_BRANCH}"
-      echo "${env.GIT_COMMIT}"
-      echo "${env.GIT_URL}"
+      steps {
+        echo "publishing report"
+        echo "${env.GIT_BRANCH}"
+        echo "${env.GIT_COMMIT}"
+        echo "${env.GIT_URL}"
+        
+        echo "${env.JOB_NAME}"
+        echo "${env.JOB_URL}"
+        echo "${env.BUILD_URL}"
+        echo "${env.BUILD_NUMBER}"
+        echo "${env.BRANCH_NAME}"
+      }
       
-      echo "${env.JOB_NAME}"
-      echo "${env.JOB_URL}"
-      echo "${env.BUILD_URL}"
-      echo "${env.BUILD_NUMBER}"
-      echo "${env.BRANCH_NAME}"
     }
   }
 }
