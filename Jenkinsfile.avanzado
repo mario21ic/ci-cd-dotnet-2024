@@ -58,7 +58,7 @@ pipeline {
 
         stage("Test") {
             steps {
-                sh "./scripts/unit_test.sh ${env.BUILD_NUMBER}"
+                sh "./scripts/unit_tests.sh ${env.BUILD_NUMBER}"
                 sh "./scripts/integration_tests.sh ${env.BUILD_NUMBER} ${env.JOB_NAME}"
 
                 echo "Performance test"
