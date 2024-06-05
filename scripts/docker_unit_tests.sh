@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -xe
 
 BUILD=$1
 echo "Running unit tests in Docker: "$BUILD
