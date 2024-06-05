@@ -1,0 +1,93 @@
+pipeline {
+    agent any
+
+    options {
+        //ansiColor('xterm')
+        timestamps()
+        timeout(time: 1, unit: 'HOURS')
+    }
+    
+    parameters {
+        choice(name: 'TYPE', choices: 'aut\ncron\ndata', description: 'Autoscaling, Cron or Data')
+        booleanParam(name: 'DEPLOY', defaultValue: false, description: 'Deploy to server')
+        string(name: 'SLACK_CHANNEL', defaultValue: '#deploys', description: '')
+    }
+
+    environment {
+        ARTIFACTOR = "${env.BUILD_NUMBER}.zip"
+        SLACK_MESSAGE = "Job '${env.JOB_NAME} - ${params.TYPE}': Build ${env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage("Repository") {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage("Check") {
+            steps {
+                parallel(
+                    systanx: {
+                        sh "./scripts/check_syntax.sh"
+                    },
+                    style: {
+                        echo "Style checks"
+                    },
+                    sonarqube: {
+                        echo "Sonarqube check"
+                    },
+                    security: {
+                        echo "Security checks"
+                    }
+                )
+            }
+        }
+
+        stage("Build") {
+            steps {
+                echo "Dependencies"
+
+                writeFile file: "build_number.txt", text: "${env.BUILD_NUMBER}"
+                writeFile file: "build_number.env", text: "BUILD_NUMBER=${env.BUILD_NUMBER}"
+                
+                echo "Building App"
+                sh "./scripts/docker.sh build ${env.BUILD_NUMBER}"
+            }
+        }
+
+        stage("Test") {
+            steps {
+                sh "./scripts/docker.sh build test ${env.BUILD_NUMBER}"
+                sh "./scripts/integration_tests.sh ${env.BUILD_NUMBER} ${env.JOB_NAME}"
+
+                echo "Performance test"
+                echo "Security test"
+                echo "Acceptance test"
+                echo "End to end test"
+            }
+        }
+
+        stage("Deploy") {
+            steps {
+                echo "Calling another job"
+            }
+        }
+
+        stage('Report') {
+            steps {
+                echo "Publishing report"
+                echo "${env.GIT_BRANCH}"
+                echo "${env.GIT_COMMIT}"
+                echo "${env.GIT_URL}"
+                
+                echo "${env.JOB_NAME}"
+                echo "${env.JOB_URL}"
+                echo "${env.BUILD_URL}"
+                echo "${env.BUILD_NUMBER}"
+                echo "${env.BRANCH_NAME}"
+            }
+        }
+    
+    }
+}
