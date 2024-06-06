@@ -14,7 +14,7 @@ pipeline {
     }
 
     environment {
-        ARTIFACTOR = "${env.BUILD_NUMBER}.zip"
+        ARTIFACT = "${env.BUILD_NUMBER}.zip"
         SLACK_MESSAGE = "Job '${env.JOB_NAME} - ${params.TYPE}': Build ${env.BUILD_NUMBER}"
     }
 
@@ -75,6 +75,8 @@ pipeline {
                 }
             }
             steps {
+                sh "./scripts/artifact.sh ${env.BUILD_NUMBER}"
+                archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
                 echo "Calling another job"
             }
         }
