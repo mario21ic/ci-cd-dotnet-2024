@@ -13,8 +13,8 @@ public class UnitTest2
     [Fact]
     public void Test5()
     {
-        //Assert.True(true);
-        Assert.True(false); // descomentar para fallar
+        Assert.True(true); // Bien
+        //Assert.True(false); // descomentar para fallar
     }
 
     [Fact]
