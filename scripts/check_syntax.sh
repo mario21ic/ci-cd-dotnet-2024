@@ -1,5 +1,7 @@
 #!/bin/bash
-set +e
+#set +e # seguir aunque existan errores
+set -e # parar si da error
 
-echos "checking syntax.."
-exit 0
+echo "checking syntax.."
+
+#exit 0
