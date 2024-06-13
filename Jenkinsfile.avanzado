@@ -32,7 +32,7 @@ pipeline {
                         sh "./scripts/check_syntax.sh"
                     },
                     style: {
-                        echos "Style checks"
+                        echo "Style checks"
                     },
                     sonarqube: {
                         echo "Sonarqube check"
