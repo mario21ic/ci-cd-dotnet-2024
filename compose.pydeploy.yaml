@@ -1,0 +1,11 @@
+version: "2"
+
+services:
+
+  deploy:
+    image: mario21ic/pydeploy:1.0
+    volumes:
+      - ./artifact.zip:/tmp/artifact.zip
+      - ./appspec.yml:/tmp/appspec.yml
+      - /home/azureuser/app_stage/:/home/azureuser/app
+    command: pydeploy
