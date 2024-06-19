@@ -4,4 +4,4 @@ set -xe
 BUILD=$1
 echo "Running unit tests: "$BUILD
 
-cd MyApp.Tests/ && dotnet test
+cd MyApi.Tests/ && dotnet test
