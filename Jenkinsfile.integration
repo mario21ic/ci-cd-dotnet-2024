@@ -1,0 +1,133 @@
+pipeline {
+    agent any
+
+    options {
+        //ansiColor('xterm')
+        timestamps()
+        timeout(time: 1, unit: 'HOURS')
+    }
+    
+    parameters {
+        choice(name: 'ENV', choices: 'dev\nqa\nprod', description: 'Environment')
+        booleanParam(name: 'DEPLOY', defaultValue: false, description: 'Deploy to servers')
+        string(name: 'SLACK_CHANNEL', defaultValue: '#deploys', description: '')
+    }
+
+    environment {
+        ARTIFACT = "${env.BUILD_NUMBER}.zip"
+        // DEPLOY_JOB = "pipeline.${params.ENV}.deploy"
+        DEPLOY_JOB = "pipeline.delivery"
+        SLACK_MESSAGE = "Job '${env.JOB_NAME} - ${params.TYPE}': Build ${env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage("Repository") {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage("Check") {
+            steps {
+                parallel(
+                    systanx: {
+                        sh "./scripts/check_syntax.sh"
+                    },
+                    style: {
+                        echo "Style checks"
+                    },
+                    sonarqube: {
+                        echo "Sonarqube check"
+                    },
+                    security: {
+                        echo "Security checks"
+                    }
+                )
+            }
+        }
+
+        stage("Build") {
+            steps {
+                echo "Dependencies"
+
+                writeFile file: "build_number.txt", text: "${env.BUILD_NUMBER}"
+                writeFile file: "build_number.env", text: "BUILD_NUMBER=${env.BUILD_NUMBER}"
+                
+                echo "Building App"
+                sh "./scripts/build.sh ${env.BUILD_NUMBER}"
+
+                echo "Building Artifact"
+                sh "./scripts/artifact.sh ${env.BUILD_NUMBER}"
+            }
+        }
+
+        stage("Test") {
+            steps {
+                sh "./scripts/docker_unit_tests.sh ${env.BUILD_NUMBER}"
+                sh "./scripts/integration_tests.sh ${env.BUILD_NUMBER} ${env.JOB_NAME}"
+
+                echo "Performance test"
+                echo "Security test"
+                echo "Acceptance test"
+                echo "End to end test"
+            }
+        }
+
+        stage("Docker") {
+            steps {
+                sh "./scripts/docker-build.sh ${env.BUILD_NUMBER}"
+                sh "./scripts/docker-push.sh ${env.BUILD_NUMBER}"
+            }
+        }
+
+        stage("Deploy") {
+            when {
+                expression {
+                    params.DEPLOY ==~ /(?i)(Y|YES|T|TRUE|ON|RUN)/
+                }
+            }
+            steps {
+                
+
+                echo "Calling another job"
+                build job: "${DEPLOY_JOB}", wait: false, parameters: [
+                    // [$class: 'BooleanParameterValue', name: 'LAUNCH_CONFIGURATION', value: Boolean.valueOf("True")]
+                ]
+            }
+        }
+
+        stage('Report') {
+            steps {
+                echo "Publishing report"
+                echo "${env.GIT_BRANCH}"
+                echo "${env.GIT_COMMIT}"
+                echo "${env.GIT_URL}"
+                
+                echo "${env.JOB_NAME}"
+                echo "${env.JOB_URL}"
+                echo "${env.BUILD_URL}"
+                echo "${env.BUILD_NUMBER}"
+                echo "${env.BRANCH_NAME}"
+            }
+        }
+    
+    }
+    
+    post {
+        always {
+            archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
+            echo "Cleaning up"
+            deleteDir()
+        }
+        
+        success {
+            echo "Success"
+            // slackSend channel: "${params.SLACK_CHANNEL}", color: 'good', message: "${SLACK_MESSAGE}"
+        }
+        
+        failure {
+            echo "Failure"
+            // slackSend channel: "${params.SLACK_CHANNEL}", color: 'danger', message: "${SLACK_MESSAGE}"
+        }
+    }
+}
