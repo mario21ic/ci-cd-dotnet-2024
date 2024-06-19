@@ -9,6 +9,7 @@ pipeline {
     
     parameters {
         choice(name: 'ENV_NAME', choices: 'dev\nqa\nprod', description: 'Environment')
+        string(name: 'DOCKERHUB_CREDENTIAL', defaultValue: 'docker-credentials', description: 'Docker hub credential')
         booleanParam(name: 'DEPLOY', defaultValue: false, description: 'Deploy to servers')
         string(name: 'SLACK_CHANNEL', defaultValue: '#deploys', description: '')
     }
@@ -78,12 +79,8 @@ pipeline {
             steps {
                 sh "./scripts/docker-build.sh ${env.BUILD_NUMBER}"
 
-                withCredentials([usernamePassword(
-                    credentialsId: "docker-credentials",
-                    usernameVariable: "USER",
-                    passwordVariable: "PASS"
-                )]) {
-                    sh "docker login -u ${USER} -p ${PASS}"
+                withCredentials([usernamePassword(credentialsId: "${params.DOCKERHUB_CREDENTIAL}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"
                     sh "./scripts/docker-push.sh ${env.BUILD_NUMBER}"
                 }
 
