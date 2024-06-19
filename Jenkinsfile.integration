@@ -8,14 +8,14 @@ pipeline {
     }
     
     parameters {
-        choice(name: 'ENV', choices: 'dev\nqa\nprod', description: 'Environment')
+        choice(name: 'ENV_NAME', choices: 'dev\nqa\nprod', description: 'Environment')
         booleanParam(name: 'DEPLOY', defaultValue: false, description: 'Deploy to servers')
         string(name: 'SLACK_CHANNEL', defaultValue: '#deploys', description: '')
     }
 
     environment {
         ARTIFACT = "${env.BUILD_NUMBER}.zip"
-        // DEPLOY_JOB = "pipeline.${params.ENV}.deploy"
+        // DEPLOY_JOB = "pipeline.${ENV_NAME}.deploy"
         DEPLOY_JOB = "pipeline.delivery"
         SLACK_MESSAGE = "Job '${env.JOB_NAME} - ${params.TYPE}': Build ${env.BUILD_NUMBER}"
     }
@@ -74,9 +74,19 @@ pipeline {
         }
 
         stage("Docker") {
+            
             steps {
                 sh "./scripts/docker-build.sh ${env.BUILD_NUMBER}"
-                sh "./scripts/docker-push.sh ${env.BUILD_NUMBER}"
+
+                withCredentials([usernamePassword(
+                    credentialsId: "docker-credentials",
+                    usernameVariable: "USER",
+                    passwordVariable: "PASS"
+                )]) {
+                    sh "docker login -u $USER -p $PASS"
+                    sh "./scripts/docker-push.sh ${env.BUILD_NUMBER}"
+                }
+
             }
         }
 
@@ -115,6 +125,7 @@ pipeline {
     
     post {
         always {
+            sh "docker logout"
             archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
             echo "Cleaning up"
             deleteDir()
