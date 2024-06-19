@@ -83,7 +83,7 @@ pipeline {
                     usernameVariable: "USER",
                     passwordVariable: "PASS"
                 )]) {
-                    sh "docker login -u $USER -p $PASS"
+                    sh "docker login -u ${USER} -p ${PASS}"
                     sh "./scripts/docker-push.sh ${env.BUILD_NUMBER}"
                 }
 
