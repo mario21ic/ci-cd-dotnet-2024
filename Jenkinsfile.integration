@@ -19,6 +19,7 @@ pipeline {
     }
 
     environment {
+        ARTIFACT = "${env.BUILD_NUMBER}.zip"
         DOCKER_IMAGE = "${params.DOCKERHUB_USER}/dotnet-api:v${env.BUILD_NUMBER}"
         
         DEPLOY_JOB = "pipeline.delivery"
@@ -68,6 +69,7 @@ pipeline {
                 writeFile file: "build_number.env", text: "BUILD_NUMBER=${env.BUILD_NUMBER}"
 
                 sh "./scripts/docker-build.sh ${env.DOCKER_IMAGE}"
+                sh "./scripts/artifact_cd.sh ${params.DOCKER_IMAGE} ${env.ARTIFACT}"
             }
         }
 
@@ -102,7 +104,7 @@ pipeline {
             }
             steps {
                 build job: "${DEPLOY_JOB}", wait: true, parameters: [
-                    [$class: 'StringParameterValue', name: 'ENV_NAME', value: "${params.ENV_NAME}"],
+                    [$class: 'StringParameterValue', name: 'ARTIFACT', value: "${env.ARTIFACT}"],
                     [$class: 'StringParameterValue', name: 'DOCKER_IMAGE', value: "${env.DOCKER_IMAGE}"],
                     [$class: 'StringParameterValue', name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}"]
                 ]
@@ -128,6 +130,7 @@ pipeline {
     
     post {
         always {
+            archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
             sh "docker logout"
             echo "Cleaning up"
             //deleteDir()
