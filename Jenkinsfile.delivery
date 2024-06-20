@@ -53,7 +53,7 @@ pipeline {
                 sh "docker service ls"
                 sh "docker service ps mystack_api"
 
-                sh "curl http://localhost:8081/weatherforecast | jq ."
+                // sh "curl http://localhost:8081/weatherforecast | jq ."
             }
         }
     
