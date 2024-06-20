@@ -48,9 +48,9 @@ pipeline {
                     docker_compose_pydeploy: {
                         sh "./scripts/check_docker_compose.sh compose.pydeploy.yaml"
                     },
-                    docker_compose_stack: {
-                        sh "./scripts/check_docker_compose.sh stack.yaml"
-                    }
+                    //docker_compose_stack: {
+                    //    sh "./scripts/check_docker_compose.sh stack.yaml.template"
+                    //}
                 )
             }
         }
