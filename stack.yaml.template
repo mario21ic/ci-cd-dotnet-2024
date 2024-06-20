@@ -4,8 +4,6 @@ services:
   api:
     #image: mario21ic/dotnet-api:v4
     image: ${DOCKER_IMAGE}
-    build:
-      context: .
     ports:
       - 8081:80
     deploy: # rolling
