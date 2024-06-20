@@ -8,12 +8,13 @@ pipeline {
     }
     
     parameters {
-        string(name: 'ARTIFACT', defaultValue: 'artifact.zip', description: 'Recipe to deploy')
+        // string(name: 'ARTIFACT', defaultValue: 'artifact.zip', description: 'Recipe to deploy')
         string(name: 'DOCKER_IMAGE', defaultValue: 'mario21ic/dotnet-api:v1', description: 'Docker image to deploy')
         string(name: 'SLACK_CHANNEL', defaultValue: '#deploys', description: '')
     }
 
     environment {
+        ARTIFACT = "artifact.zip"
         SLACK_MESSAGE = "Job '${env.JOB_NAME} - ${params.TYPE}': Build ${env.BUILD_NUMBER}"
     }
 
@@ -24,33 +25,27 @@ pipeline {
             }
         }
 
-        stage('Copy Artifact') {
-            steps {
-                copyArtifacts(
-                    projectName: 'pipeline.integration',
-                    filter: "${params.ARTIFACT}",
-                    target: 'artifacts/',
-                    selector: lastSuccessful()
-                )
-            }
-        }
-
-        stage("Check") {
-            steps {
-                sh "unzip ${params.ARTIFACT}"
-                sh "ls -la"
-                sh "cat stack.yaml"
-                sh "cat appspec.yml"
-            }
-        }
-
-        // stage("Artifact") {
+        // stage('Copy Artifact') {
         //     steps {
-        //         sh "./scripts/artifact_cd.sh ${params.DOCKER_IMAGE}"
+        //         copyArtifacts(
+        //             projectName: 'pipeline.integration',
+        //             filter: "${params.ARTIFACT}",
+        //             target: 'artifacts/',
+        //             selector: lastSuccessful()
+        //         )
         //     }
         // }
 
-        stage("Deploy") {
+        stage("Artifact") {
+            steps {
+                sh "./scripts/artifact_cd.sh ${params.DOCKER_IMAGE} ${envs.ARTIFACT}"
+                sh "cat stack.yaml"
+                sh "cat appspec.yml"
+                archiveArtifacts artifacts: "${ARTIFACT}"
+            }
+        }
+
+        stage("CodeDeploy") {
             steps {
                 sh "./scripts/pydeploy.sh"
             }
@@ -66,5 +61,23 @@ pipeline {
             }
         }
     
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
+            echo "Cleaning up"
+            deleteDir()
+        }
+        
+        success {
+            echo "Success"
+            // slackSend channel: "${params.SLACK_CHANNEL}", color: 'good', message: "${SLACK_MESSAGE}"
+        }
+        
+        failure {
+            echo "Failure"
+            // slackSend channel: "${params.SLACK_CHANNEL}", color: 'danger', message: "${SLACK_MESSAGE}"
+        }
     }
 }

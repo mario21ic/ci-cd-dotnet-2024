@@ -20,7 +20,7 @@ pipeline {
 
     environment {
         // ARTIFACT = "${env.BUILD_NUMBER}.zip"
-        ARTIFACT = "artifact.zip"
+        // ARTIFACT = "artifact.zip"
         DOCKER_IMAGE = "${params.DOCKERHUB_USER}/dotnet-api:v${env.BUILD_NUMBER}"
         
         DEPLOY_JOB = "pipeline.delivery"
@@ -73,21 +73,11 @@ pipeline {
             }
         }
 
-        stage("Artifact") {
-            steps {
-                sh "./scripts/artifact_cd.sh ${env.DOCKER_IMAGE} ${env.ARTIFACT}"
-                sh "cat stack.yaml"
-                archiveArtifacts artifacts: "${ARTIFACT}"
-            }
-        }
-        
-
-        // stage("DockerHub") {
+        // stage("Artifact") {
         //     steps {
-        //         withCredentials([usernamePassword(credentialsId: "${params.DOCKERHUB_CREDENTIAL}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-        //             sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"
-        //             sh "./scripts/docker-push.sh ${env.DOCKER_IMAGE}"
-        //         }
+        //         sh "./scripts/artifact_cd.sh ${env.DOCKER_IMAGE} ${env.ARTIFACT}"
+        //         sh "cat stack.yaml"
+        //         archiveArtifacts artifacts: "${ARTIFACT}"
         //     }
         // }
 
@@ -118,7 +108,7 @@ pipeline {
                 }
 
                 build job: "${DEPLOY_JOB}", wait: true, parameters: [
-                    [$class: 'StringParameterValue', name: 'ARTIFACT', value: "${env.ARTIFACT}"],
+                    // [$class: 'StringParameterValue', name: 'ARTIFACT', value: "${env.ARTIFACT}"],
                     [$class: 'StringParameterValue', name: 'DOCKER_IMAGE', value: "${env.DOCKER_IMAGE}"],
                     [$class: 'StringParameterValue', name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}"]
                 ]
@@ -144,10 +134,10 @@ pipeline {
     
     post {
         always {
+            // archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
             sh "docker logout"
             echo "Cleaning up"
             deleteDir()
-            // archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
         }
         
         success {
