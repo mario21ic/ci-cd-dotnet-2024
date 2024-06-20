@@ -129,7 +129,6 @@ pipeline {
     post {
         always {
             sh "docker logout"
-            archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
             echo "Cleaning up"
             //deleteDir()
         }
