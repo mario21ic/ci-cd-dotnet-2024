@@ -19,7 +19,7 @@ pipeline {
     }
 
     environment {
-        // ARTIFACT = "${env.BUILD_NUMBER}.zip"
+        ARTIFACT = "${env.BUILD_NUMBER}.zip"
         // ARTIFACT = "artifact.zip"
         DOCKER_IMAGE = "${params.DOCKERHUB_USER}/dotnet-api:v${env.BUILD_NUMBER}"
         
@@ -70,10 +70,11 @@ pipeline {
                 writeFile file: "build_number.env", text: "BUILD_NUMBER=${env.BUILD_NUMBER}"
 
                 sh "./scripts/docker-build.sh ${env.DOCKER_IMAGE}"
+                sh "./scripts/artifact.sh ${env.BUILD_NUMBER}"
             }
         }
 
-        // stage("Artifact") {
+        // stage("ArtifactCD") {
         //     steps {
         //         sh "./scripts/artifact_cd.sh ${env.DOCKER_IMAGE} ${env.ARTIFACT}"
         //         sh "cat stack.yaml"
@@ -134,7 +135,7 @@ pipeline {
     
     post {
         always {
-            // archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
+            archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
             sh "docker logout"
             echo "Cleaning up"
             // deleteDir()
