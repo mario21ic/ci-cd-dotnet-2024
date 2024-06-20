@@ -8,7 +8,7 @@ services:
       context: .
     ports:
       - 8081:80
-    deploy:
+    deploy: # rolling
       replicas: 3
       resources:
         limits:
@@ -17,11 +17,11 @@ services:
       restart_policy:
         condition: on-failure
       update_config:
-        parallelism: 1
-        delay: 10s
-        failure_action: rollback
-        monitor: 30s
-        max_failure_ratio: 0.1
+        parallelism: 1 # solo una tarea se actualice a la vez.
+        delay: 10s # entre cada actualización
+        failure_action: rollback # debe revertirse a la versión anterior en caso de fallo
+        monitor: 30s # establece el tiempo durante el cual Docker monitoreará cada tarea después de la actualización para ver si ha fallado.
+        max_failure_ratio: 0.1 # si más del 10% de las actualizaciones fallan, se considerará un fallo general del despliegue.
     networks:
       - my-network
 
