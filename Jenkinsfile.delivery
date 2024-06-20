@@ -35,6 +35,15 @@ pipeline {
             }
         }
 
+        stage("Check") {
+            steps {
+                sh "unzip ${params.ARTIFACT}"
+                sh "ls -la"
+                sh "cat stack.yaml"
+                sh "cat appspec.yml"
+            }
+        }
+
         // stage("Artifact") {
         //     steps {
         //         sh "./scripts/artifact_cd.sh ${params.DOCKER_IMAGE}"

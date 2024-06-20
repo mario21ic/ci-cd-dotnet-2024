@@ -19,7 +19,8 @@ pipeline {
     }
 
     environment {
-        ARTIFACT = "${env.BUILD_NUMBER}.zip"
+        // ARTIFACT = "${env.BUILD_NUMBER}.zip"
+        ARTIFACT = "artifact.zip"
         DOCKER_IMAGE = "${params.DOCKERHUB_USER}/dotnet-api:v${env.BUILD_NUMBER}"
         
         DEPLOY_JOB = "pipeline.delivery"
@@ -69,23 +70,31 @@ pipeline {
                 writeFile file: "build_number.env", text: "BUILD_NUMBER=${env.BUILD_NUMBER}"
 
                 sh "./scripts/docker-build.sh ${env.DOCKER_IMAGE}"
-                sh "./scripts/artifact_cd.sh ${params.DOCKER_IMAGE} ${env.ARTIFACT}"
             }
         }
 
-        stage("DockerHub") {
+        stage("Artifact") {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${params.DOCKERHUB_CREDENTIAL}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"
-                    sh "./scripts/docker-push.sh ${env.DOCKER_IMAGE}"
-                }
+                sh "./scripts/artifact_cd.sh ${env.DOCKER_IMAGE} ${env.ARTIFACT}"
+                sh "cat stack.yaml"
+                archiveArtifacts artifacts: "${ARTIFACT}"
             }
         }
+        
+
+        // stage("DockerHub") {
+        //     steps {
+        //         withCredentials([usernamePassword(credentialsId: "${params.DOCKERHUB_CREDENTIAL}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+        //             sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"
+        //             sh "./scripts/docker-push.sh ${env.DOCKER_IMAGE}"
+        //         }
+        //     }
+        // }
 
         stage ('Security') {
             when {
                 expression {
-                return params.SECURITY ==~ /(?i)(Y|YES|T|TRUE|ON|RUN)/
+                    return params.SECURITY ==~ /(?i)(Y|YES|T|TRUE|ON|RUN)/
                 }
             }
             steps {
@@ -99,10 +108,15 @@ pipeline {
         stage("Deploy") {
             when {
                 expression {
-                    params.DEPLOY ==~ /(?i)(Y|YES|T|TRUE|ON|RUN)/
+                    return params.DEPLOY ==~ /(?i)(Y|YES|T|TRUE|ON|RUN)/
                 }
             }
             steps {
+                withCredentials([usernamePassword(credentialsId: "${params.DOCKERHUB_CREDENTIAL}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"
+                    sh "./scripts/docker-push.sh ${env.DOCKER_IMAGE}"
+                }
+
                 build job: "${DEPLOY_JOB}", wait: true, parameters: [
                     [$class: 'StringParameterValue', name: 'ARTIFACT', value: "${env.ARTIFACT}"],
                     [$class: 'StringParameterValue', name: 'DOCKER_IMAGE', value: "${env.DOCKER_IMAGE}"],
@@ -130,10 +144,10 @@ pipeline {
     
     post {
         always {
-            archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
             sh "docker logout"
             echo "Cleaning up"
-            //deleteDir()
+            deleteDir()
+            // archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
         }
         
         success {
