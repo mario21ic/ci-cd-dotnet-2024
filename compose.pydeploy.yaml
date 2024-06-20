@@ -8,4 +8,6 @@ services:
       - ./artifact.zip:/tmp/artifact.zip
       - ./appspec.yml:/tmp/appspec.yml
       - /home/azureuser/app/:/home/azureuser/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /home/azureuser/app_tmp
     command: pydeploy

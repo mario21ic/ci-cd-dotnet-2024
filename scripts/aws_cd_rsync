@@ -1,3 +1,4 @@
 #!/bin/bash
+set -xe
 
 rsync -raqe /home/azureuser/app_tmp/* /home/azureuser/app/

@@ -4,17 +4,17 @@ files:
   - source: ./
     destination: /home/azureuser/app_tmp
 hooks:
-  BeforeInstall:
+  #BeforeInstall:
+  #  - location: scripts/aws_cd_mkdir
+  #    timeout: 300
+  #    runas: root
+  AfterInstall:
     - location: scripts/aws_cd_mkdir
       timeout: 300
       runas: root
-  AfterInstall:
     - location: scripts/aws_cd_rsync
       timeout: 300
       runas: root
-    #- location: scripts/aws_cd_migrations
-    #  timeout: 300
-    #  runas: ec2-user
   ApplicationStart:
     - location: scripts/aws_cd_start
       timeout: 300
