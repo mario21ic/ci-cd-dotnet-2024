@@ -69,8 +69,10 @@ pipeline {
                 writeFile file: "build_number.txt", text: "${env.BUILD_NUMBER}"
                 writeFile file: "build_number.env", text: "BUILD_NUMBER=${env.BUILD_NUMBER}"
 
-                sh "./scripts/docker-build.sh ${env.DOCKER_IMAGE}"
+                sh "./scripts/build.sh ${env.BUILD_NUMBER}"
                 sh "./scripts/artifact.sh ${env.BUILD_NUMBER}"
+
+                sh "./scripts/docker-build.sh ${env.DOCKER_IMAGE}"
             }
         }
 
