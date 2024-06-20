@@ -38,7 +38,7 @@ pipeline {
 
         stage("Artifact") {
             steps {
-                sh "./scripts/artifact_cd.sh ${params.DOCKER_IMAGE} ${envs.ARTIFACT}"
+                sh "./scripts/artifact_cd.sh ${params.DOCKER_IMAGE} ${env.ARTIFACT}"
                 sh "cat stack.yaml"
                 sh "cat appspec.yml"
                 archiveArtifacts artifacts: "${ARTIFACT}"
