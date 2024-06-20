@@ -137,7 +137,7 @@ pipeline {
             // archiveArtifacts artifacts: "${ARTIFACT}", onlyIfSuccessful: true
             sh "docker logout"
             echo "Cleaning up"
-            deleteDir()
+            // deleteDir()
         }
         
         success {
