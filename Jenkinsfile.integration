@@ -8,16 +8,21 @@ pipeline {
     }
     
     parameters {
-        choice(name: 'ENV_NAME', choices: 'dev\nqa\nprod', description: 'Environment')
-        string(name: 'DOCKERHUB_CREDENTIAL', defaultValue: 'docker-credentials', description: 'Docker hub credential')
-        booleanParam(name: 'DEPLOY', defaultValue: false, description: 'Deploy to servers')
-        string(name: 'SLACK_CHANNEL', defaultValue: '#deploys', description: '')
+        choice(name: 'ENV_NAME', choices: 'dev\nqa\nprod', description: 'App Environment')
+        string(name: 'DOCKERHUB_USER', defaultValue: 'mario21ic', description: 'Docker Hub user')
+        string(name: 'DOCKERHUB_CREDENTIAL', defaultValue: 'dockerhub-credential', description: 'Docker Hub credential')
+        
+        booleanParam(name: 'DEPLOY', defaultValue: false, description: 'Deploy to Server(s)')
+        booleanParam(name: 'SECURITY', defaultValue: false, description: 'Run Security pipeline')
+        
+        string(name: 'SLACK_CHANNEL', defaultValue: '#deploys', description: 'Send notifications to Slack channel')
     }
 
     environment {
-        ARTIFACT = "${env.BUILD_NUMBER}.zip"
-        // DEPLOY_JOB = "pipeline.${ENV_NAME}.deploy"
+        DOCKER_IMAGE = "${params.DOCKERHUB_USER}/dotnet-api:v${env.BUILD_NUMBER}"
+        
         DEPLOY_JOB = "pipeline.delivery"
+        SECURITY_JOB = "pipeline.security"
         SLACK_MESSAGE = "Job '${env.JOB_NAME} - ${params.TYPE}': Build ${env.BUILD_NUMBER}"
     }
 
@@ -34,31 +39,19 @@ pipeline {
                     systanx: {
                         sh "./scripts/check_syntax.sh"
                     },
-                    style: {
-                        echo "Style checks"
-                    },
                     sonarqube: {
                         echo "Sonarqube check"
                     },
-                    security: {
-                        echo "Security checks"
+                    docker-compose: {
+                        sh "./scripts/check_docker_compose.sh compose.yaml"
+                    }
+                    docker-compose-pydeploy: {
+                        sh "./scripts/check_docker_compose.sh compose.pydeploy.yaml"
+                    }
+                    docker-compose-stack: {
+                        sh "./scripts/check_docker_compose.sh stack.yaml"
                     }
                 )
-            }
-        }
-
-        stage("Build") {
-            steps {
-                echo "Dependencies"
-
-                writeFile file: "build_number.txt", text: "${env.BUILD_NUMBER}"
-                writeFile file: "build_number.env", text: "BUILD_NUMBER=${env.BUILD_NUMBER}"
-                
-                echo "Building App"
-                sh "./scripts/build.sh ${env.BUILD_NUMBER}"
-
-                echo "Building Artifact"
-                sh "./scripts/artifact.sh ${env.BUILD_NUMBER}"
             }
         }
 
@@ -66,24 +59,38 @@ pipeline {
             steps {
                 sh "./scripts/docker_unit_tests.sh ${env.BUILD_NUMBER}"
                 sh "./scripts/integration_tests.sh ${env.BUILD_NUMBER} ${env.JOB_NAME}"
-
-                echo "Performance test"
-                echo "Security test"
-                echo "Acceptance test"
-                echo "End to end test"
             }
         }
 
-        stage("Docker") {
-            
+        stage("Build") {
             steps {
-                sh "./scripts/docker-build.sh ${env.BUILD_NUMBER}"
+                writeFile file: "build_number.txt", text: "${env.BUILD_NUMBER}"
+                writeFile file: "build_number.env", text: "BUILD_NUMBER=${env.BUILD_NUMBER}"
 
+                sh "./scripts/docker-build.sh ${env.DOCKER_IMAGE}"
+            }
+        }
+
+        stage("DockerHub") {
+            steps {
                 withCredentials([usernamePassword(credentialsId: "${params.DOCKERHUB_CREDENTIAL}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"
-                    sh "./scripts/docker-push.sh ${env.BUILD_NUMBER}"
+                    sh "./scripts/docker-push.sh ${env.DOCKER_IMAGE}"
                 }
+            }
+        }
 
+        stage ('Security') {
+            when {
+                expression {
+                return params.SECURITY ==~ /(?i)(Y|YES|T|TRUE|ON|RUN)/
+                }
+            }
+            steps {
+                build job: "${SECURITY_JOB}", wait: false, parameters: [
+                    [$class: 'StringParameterValue', name: 'DOCKER_IMAGE', value: "${env.DOCKER_IMAGE}"],
+                    [$class: 'StringParameterValue', name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}"]
+                ]
             }
         }
 
@@ -94,11 +101,10 @@ pipeline {
                 }
             }
             steps {
-                
-
-                echo "Calling another job"
-                build job: "${DEPLOY_JOB}", wait: false, parameters: [
-                    // [$class: 'BooleanParameterValue', name: 'LAUNCH_CONFIGURATION', value: Boolean.valueOf("True")]
+                build job: "${DEPLOY_JOB}", wait: true, parameters: [
+                    [$class: 'StringParameterValue', name: 'ENV_NAME', value: "${params.ENV_NAME}"],
+                    [$class: 'StringParameterValue', name: 'DOCKER_IMAGE', value: "${env.DOCKER_IMAGE}"],
+                    [$class: 'StringParameterValue', name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}"]
                 ]
             }
         }

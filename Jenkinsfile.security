@@ -1,0 +1,76 @@
+pipeline {
+
+  agent any
+
+
+  parameters {
+    string(name: 'DOCKER_IMAGE', defaultValue: 'mario21ic/dotnet-api:v1', description: 'Docker image to scan')
+    string(name: 'SLACK_CHANNEL', defaultValue: '#deploys', description: 'Send notifications to Slack channel')
+  }
+
+  environment {
+    JOB_MESSAGE = "Job '${env.JOB_NAME}' Build ${env.BUILD_NUMBER} URL ${env.BUILD_URL}"
+  }
+
+  stages {
+    stage ('Repository') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage ('Secrets') {
+      steps {
+          sh "./scripts/gittyleaks.sh $WORKSPACE || true"
+      }
+    }
+
+    stage ('SAST') {
+        parallel {
+
+            stage ('Syft SBOM') {
+              steps {
+                sh "syft -q ${params.DOCKER_IMAGE}"
+              }
+            }
+
+            stage ('Trivy') {
+              steps {
+                sh "trivy image ${params.DOCKER_IMAGE}"
+              }
+            }
+
+        }
+    }
+
+    stage ('DAST') {
+        parallel {
+
+            stage ('ZAP') {
+              steps {
+                echo "TODO ZAP"
+              }
+            }
+
+        }
+    }
+
+  }
+
+  post {
+      always {
+          echo "Cleaning up"
+          deleteDir()
+      }
+      
+      success {
+          echo "Success"
+          // slackSend channel: "${params.SLACK_CHANNEL}", color: 'good', message: "${SLACK_MESSAGE}"
+      }
+      
+      failure {
+          echo "Failure"
+          // slackSend channel: "${params.SLACK_CHANNEL}", color: 'danger', message: "${SLACK_MESSAGE}"
+      }
+  }
+}

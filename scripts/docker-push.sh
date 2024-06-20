@@ -1,4 +1,5 @@
 #!/bin/bash
 set -xe
 
-docker push mario21ic/dotnet-api:v$1
+DOCKER_IMAGE=$1
+docker push $DOCKER_IMAGE

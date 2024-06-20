@@ -1,4 +1,5 @@
 #!/bin/bash
 set -xe
 
-docker build --platform=linux/amd64 -t mario21ic/dotnet-api:v$1 .
+DOCKER_IMAGE=$1
+docker build --platform=linux/amd64 -t $DOCKER_IMAGE -f Dockerfile ./
