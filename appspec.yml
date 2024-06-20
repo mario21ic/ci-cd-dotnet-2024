@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: ./
-    destination: /home/azureuser/tmp_app
+    destination: /home/azureuser/app_tmp
 hooks:
   BeforeInstall:
     - location: scripts/aws_cd_mkdir

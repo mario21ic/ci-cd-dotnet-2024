@@ -3,6 +3,8 @@ version: '3.8'
 services:
   api:
     image: mario21ic/dotnet-api:v4
+    build:
+      context: .
     ports:
       - 8081:80
     deploy:
@@ -13,10 +15,15 @@ services:
           memory: 512M
       restart_policy:
         condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        monitor: 30s
+        max_failure_ratio: 0.1
     networks:
       - my-network
 
 networks:
   my-network:
     driver: overlay
-
