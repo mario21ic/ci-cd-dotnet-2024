@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   api:
-    image: mario21ic/dotnet-api:v4
+    #image: mario21ic/dotnet-api:v4
+    image: ${DOCKER_IMAGE}
     build:
       context: .
     ports:
